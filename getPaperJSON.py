@@ -22,7 +22,7 @@ def getPaperJSON(pmid: str):
     jsonFileName = f"{pmid}.json"
     jsonFilePath = os.path.join(config.getJSONFolderPath(), jsonFileName)
     
-    with open(jsonFilePath, "w") as sectionsFile:
+    with open(jsonFilePath, "w", encoding="utf-8") as sectionsFile:
         json.dump(articleJSON, sectionsFile, indent=4)
         
     status.updateField("getPaperJSON", {
@@ -40,8 +40,8 @@ if __name__ == "__main__":
         
     pmid = sys.argv[1]
     
-    try:
-        path = getPaperJSON(pmid)
-        print(f"JSON file of paper with PMID {pmid} downloaded to {path}")
-    except Exception as err:
-        print(f"Error getting paper as JSON: {err}")
+    # try:
+    path = getPaperJSON(pmid)
+    print(f"JSON file of paper with PMID {pmid} downloaded to {path}")
+    # except Exception as err:
+    #     print(f"Error getting paper as JSON: {err}")

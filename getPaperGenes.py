@@ -17,7 +17,7 @@ def getPaperGenes(pmid):
     speciesData = status.getSpeciesData()
     
     plaintextFilePath = status.getPlaintextFilePath()
-    with open(plaintextFilePath) as plaintextFile:
+    with open(plaintextFilePath, encoding="utf-8") as plaintextFile:
         promptText = plaintextFile.read()
         
     systemPrompt = config.getSystemPromptForGetPaperGenes() + json.dumps(speciesData)

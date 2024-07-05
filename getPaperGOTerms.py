@@ -14,7 +14,7 @@ def getPaperGOTerms(pmid: str):
         raise ValueError("GO terms have already been fetched for this paper")
 
     plaintextFilePath = status.getPlaintextFilePath()
-    with open(plaintextFilePath) as plaintextFile:
+    with open(plaintextFilePath, encoding="utf-8") as plaintextFile:
         paperPlaintext = plaintextFile.read()
         
     geneSpeciesPairs = status.getGeneSpeciesPairs()

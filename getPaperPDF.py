@@ -46,3 +46,6 @@ if __name__ == "__main__":
         print(f"PDF of paper with PMID {pmid} downloaded to {path}")
     except Exception as err:
         print(f"Error downloading paper as PDF: {err}")
+
+
+getPaperPDF("37939282")

@@ -1,5 +1,9 @@
 import json 
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class ConfigHandler:
     def __init__(self, file=str(os.getenv("LLM_TESTBED_CONFIG_PATH"))):
