@@ -8,7 +8,7 @@ load_dotenv()
 class ConfigHandler:
     def __init__(self, file=str(os.getenv("LLM_TESTBED_CONFIG_PATH"))):
         self.file = file
-        with open(file, "r") as f:
+        with open(file, "r", encoding='utf-8') as f:
             self.__config = json.load(f)
             
     def getConfig(self):

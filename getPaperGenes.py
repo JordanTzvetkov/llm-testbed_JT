@@ -12,10 +12,14 @@ def getPaperGenes(pmid):
         return ValueError("Species have not yet been fetched for this paper")
     
     if status.areGenesFetched():
+        # TODO: change this so we have a parameter that defines if we skip because genes are fetched or
+        # if we update the current entries in the status.
         return ValueError("Genes have already been fetched for this paper")
     
     speciesData = status.getSpeciesData()
-    
+
+    # TODO: currently we work with one prompt; we want to change the function and config file to allow passing multiple
+    # prompts to it
     plaintextFilePath = status.getPlaintextFilePath()
     with open(plaintextFilePath, encoding="utf-8") as plaintextFile:
         promptText = plaintextFile.read()

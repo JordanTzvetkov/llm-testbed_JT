@@ -1,0 +1,33 @@
+###### Proposed json by Tony for storing data #########
+# NB: could we add probablility for each term based on the prediction coefficient
+# of the LLM? For example:
+
+[
+  {"paper_ID":"PubMed_ID1", 
+   "species":[
+              {"name":"P. falciparum", 
+               "species_prob": 0.88,
+               "genes":[
+                          {"name":"PRELSG_1339000", 
+                          "gene_prob": 0.98,
+                           "GO_terms":[
+                                        {"term":"GO:0005737",
+                                        "term_prob: 0.72"
+                                        },
+                                        {"term":"GO:0020014",
+                                        "term_prob: 0.82"
+                                        }, 
+                                        {"term":"GO:0042555",
+                                        "term_prob: 0.77"
+                                        }, 
+                                        {"term":"GO:0005634",
+                                        "term_prob: 0.52"
+                                        }
+                                      ]
+                           }
+                         ]
+              }
+             ]
+  }
+]
+  

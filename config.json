@@ -12,10 +12,10 @@
         "sections": "./caches/articles/json"
     },
     "getTextFromJSON": {
-        "sections": ["abstract", "title", "intro", "results", "discussion", "methods"]
+        "sections": ["abstract", "title", "intro", "results", "discussion", "methods", "FIG", "TABLE", "SUPPL"]
     },
     "getPaperSpecies": {
-        "systemPrompt": "The user will input a series of extracts from a PubMed publication. Respond with only the species that the publication concerns. Respond in JSON, using the following schema: {\"species\": [\"1st species name\", \"2nd species name\", \"3rd species name, etc\"]} This must be parsable, so do NOT include \\n or anything similar which will make the validation fail for the JSON schema. You must respond with NO text other than the JSON",
+        "systemPrompt": "The user will input a series of extracts from a PubMed publication. Identify the species that are the primary focus of the study, especially those referenced frequently in the title, abstract, or experimental design. Prioritize these species over others mentioned. Respond with only the species that the publication concerns. Provide the species names in Latin, not using the common name, and follow the format FullFirstName FullLastName (e.g. 'Homo sapiens', not 'H. Sapiens' or 'Human'). If the experiment is based on a certain cell type or tissue type, please provide the species the cells are derived from, e.g. 'Homo sapiens', not 'HEK cells'. Respond in JSON, using the following schema: {\"species\": [\"1st species name\", \"2nd species name\", \"3rd species name, etc\"]} This must be parsable, so do NOT include \\n or anything similar which will make the validation fail for the JSON schema. You must respond with NO text other than the JSON.",
         "responseSchema": {
             "type": "object",
             "properties": {
@@ -32,7 +32,7 @@
         }
     },
     "getPaperGenes": {
-        "systemPrompt": "The user will input a series of extracts from a PubMed publication. You are to respond only with the genes associated with the species of the paper. Respond in JSON, using the following schema: {\"species\": [{\"name\": \"1st species name\", \"genes\": [{\"identifier\": \"identifier of gene 1 for 1st species\", \"name\": \"name of gene 1 for 1st species\"}, {\"identifier\": \"identifier of gene 2 for 1st species\", \"name\": \"name of gene 2 for 1st species\"}, \"etc\"]}]}, etc. This must be parsable, so do NOT include \\n or anything similar which will make the validation fail for the JSON schema. You must respond with NO text other than the raw JSON, in compressed format (i.e. no indentation, new lines) to limit the amount of characters that must be stored. You must account for ALL the genes in the paper, and each species object should contain ALL the genes associated with in in the paper. Here are the species: ",
+        "systemPrompt": "The user will input a series of extracts from a PubMed publication. You must consider ALL genes and proteins mentioned in the paper, including genes that may have been implied. Retain only those genes/proteins for which experimental evidence or novel information about biological processes, functions, cellular location, or interactions with other proteins is provided. If no genes are retained, analyse why this might be the case. Consider if the gene information could be implicit or if there are figure annotations that might have been overlooked and try again. Finally, match these genes to the species of the paper, purely based on the publication. You are to respond only with the genes associated with the species of the paper. Respond in JSON, using the following schema: {\\\"species\\\": [{\\\"name\\\": \\\"1st species name\\\", \\\"genes\\\": [{\\\"identifier\\\": \\\"identifier of gene 1 for 1st species (name of database identifier was taken from in brackets if known, otherwise just blank brackets)\\\", \\\"name\\\": \\\"name of gene 1 for 1st species\\\", \\\"symbol\\\": \\\"symbol of gene 1 for 1st species\\\"}, {\\\"identifier\\\": \\\"identifier of gene 2 for 1st species\\\", \\\"name\\\": \\\"name of gene 2 for 1st species\\\", \\\"symbol\\\": \\\"symbol of gene 2 for 1st species\\\"}, \\\"etc\\\"]}]}, etc. This must be parsable, so do NOT include \\\\n or anything similar which will make the validation fail for the JSON schema. You must respond with NO text other than the raw JSON, in compressed format (i.e. no indentation, new lines) to limit the amount of characters that must be stored. Each species object should contain ALL the genes associated with it in the paper. If some of the genes/proteins have not been assigned to a species directly, please also include them in your answer under a species name set to ‘unknown species’. For the identifier, provide e.g. UniProt, Ensembl, RefSeq, VEuPathDB or other reference IDs if given. If not, mark as 'no database identifier'. For gene name please provide the full name of the gene or leave as 'not specified' if it has not been provided, for example 'NADP/NAD-dependent aldehyde dehydrogenase PuuC' is the name for the gene 'puuC', and 'puuC' would be annotated as the gene symbol. Here are the species: ",
         "responseSchema": {
             "type": "object",
             "properties": {
@@ -54,9 +54,12 @@
                                         },
                                         "name": {
                                             "type": "string"
+                                        },
+                                        "symbol": {
+                                            "type": "string"
                                         }
                                     },
-                                    "required": ["identifier", "name"],
+                                    "required": ["identifier", "name", "symbol"],
                                     "additionalProperties": false
                                 }
                             }
@@ -71,7 +74,7 @@
         }
     },
     "getPaperGOTerms": {
-        "systemPromptStart": "The user is going to give you a pair of gene and species. Give all Gene Ontology terms associated with this pair in the given publication as a JSON list i.e. [{\"id\": \"GO:4526854138\", \"description\": \"description for first go term\"}, {\"id\": \"GO:3284974\", \"description\": \"description for second go term\"}]. It must follow that schema to pass validation as it will be processed. You must give NO other commentary than the JSON array.\nHere is the publication:\n\n",
+        "systemPromptStart": "The user is going to give you a pair of gene and species. Find all Gene Ontology terms associated with this pair in the given publication. Assess whether these Gene Ontology (GO) terms are supported by novel experimental evidence within this study. Assess whether the evidence is strong or weak, to enable us to prioritise terms backed by robust data. Give all resulting Gene Ontology terms associated with this pair in the given publication as a JSON list i.e. [{\\\"id\\\": \\\"GO:4526854138\\\", \\\"description\\\": \\\"description for first GO term\\“, \\“evidence\\\": \\“describe the experimental evidence supporting this GO term assignment“, \\“evidence score\\\": \\“provide a score for the evidence as no evidence, weak evidence, or strong evidence\"}, {\\\"id\\\": \\\"GO:3284974\\\", \\\"description\\\": \\\"description for second go term\\“, \\“evidence\\\": \\“describe the experimental evidence supporting this GO term assignment“, \\“evidence score\\\": \\“provide a score for the evidence as no evidence, weak evidence, or strong evidence\"}]. Double-check that the GO terms description aligns with the actual study context and try to provide GO terms as specific as possible. Double-check the GO term IDs match the description – if you have provided an incorrect GO term ID, please correct it before returning the JSON list. Your final answer must follow the specified JSON schema to pass validation as it will be processed. You must give NO other commentary than the JSON array.\\nHere is the publication:\\n\\n",
         "responseSchema": {
             "type": "array",
             "items": {
