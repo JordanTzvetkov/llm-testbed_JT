@@ -66,3 +66,14 @@ class ConfigHandler:
     
     def getResponseSchemaForValidateGOTermDescriptions(self):
         return self.__config["validateGOTermDescriptions"]["responseSchema"]
+
+        #### New Methods for ExtractGeneIDs ####
+    def getSystemPromptForExtractGeneIDs(self):
+        return self.__config["extractGeneIDs"]["systemPrompt"]
+
+    def getUserPromptsForExtractGeneIDs(self):
+        # Returns the user prompts defined for the ExtractGeneIDs config - these are a list of multiple prompts
+        return self.__config["extractGeneIDs"]["userPrompts"]
+
+    def getFinalResponseSchemaForExtractGeneIDs(self):
+        return self.__config["extractGeneIDs"]["finalResponseSchema"]

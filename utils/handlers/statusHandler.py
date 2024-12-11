@@ -122,4 +122,13 @@ class StatusHandler:
             raise ValueError("GO term descriptions have not yet been validated for this paper")
         
         return self.__status["validateGOTermDescriptions"]["acceptedGOTerms"]
-    
+
+        #### New Methods for ExtractGeneIDs ####
+    def areGeneIDsExtracted(self):
+        return helpers.hasattrdeep(self.__status, ["extractGeneIDs", "success"]) and self.__status["extractGeneIDs"][
+            "success"] == True
+
+    def getExtractedGeneIDsData(self):
+        if not self.areGeneIDsExtracted():
+            raise ValueError("Gene IDs have not yet been extracted for this paper")
+        return self.__status["extractGeneIDs"]["response"]
