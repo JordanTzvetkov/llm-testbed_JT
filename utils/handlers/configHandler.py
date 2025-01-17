@@ -67,13 +67,44 @@ class ConfigHandler:
     def getResponseSchemaForValidateGOTermDescriptions(self):
         return self.__config["validateGOTermDescriptions"]["responseSchema"]
 
-        #### New Methods for ExtractGeneIDs ####
+     #### New Methods for ExtractGeneIDs ####
+    # Extract Gene IDs
     def getSystemPromptForExtractGeneIDs(self):
         return self.__config["extractGeneIDs"]["systemPrompt"]
 
+    # def getResponseSchemaForExtractGeneIDs(self):    # not needed, changed so schema is provided for each prompt
+    #     return self.__config["extractGeneIDs"]["responseSchema"]
+
     def getUserPromptsForExtractGeneIDs(self):
-        # Returns the user prompts defined for the ExtractGeneIDs config - these are a list of multiple prompts
         return self.__config["extractGeneIDs"]["userPrompts"]
 
-    def getFinalResponseSchemaForExtractGeneIDs(self):
-        return self.__config["extractGeneIDs"]["finalResponseSchema"]
+    def getResponseSchemaForPrompt(self, prompt_name):
+        """
+        Retrieve the response schema for a specific user prompt by name.
+        :param prompt_name: Name of the user prompt (e.g., 'getSymbols', 'getDescriptions').
+        :return: The response schema of the specified prompt.
+        """
+        prompts = self.__config["extractGeneIDs"]["userPrompts"]
+        for prompt in prompts:
+            if prompt["name"] == prompt_name:
+                    return prompt["responseSchema"]
+        raise KeyError(f"Prompt '{prompt_name}' not found in extractGeneIDs configuration.")
+
+    # Match Gene Species Pairs
+    def getSystemPromptForMatchGeneSpeciesPairs(self):
+        return self.__config["matchGeneSpeciesPairs"]["systemPrompt"]
+
+    def getUserPromptsForMatchGeneSpeciesPairs(self):
+        return self.__config["matchGeneSpeciesPairs"]["userPrompts"]
+
+    def getResponseSchemaForPrompt(self, prompt_name):
+        """
+        Retrieve the response schema for a specific user prompt by name.
+        :param prompt_name: Name of the user prompt (e.g., 'initialAssignment', 'validateAssignments').
+        :return: The response schema of the specified prompt.
+        """
+        prompts = self.__config["matchGeneSpeciesPairs"]["userPrompts"]
+        for prompt in prompts:
+            if prompt["name"] == prompt_name:
+                return prompt["responseSchema"]
+        raise KeyError(f"Prompt '{prompt_name}' not found in matchGeneSpeciesPairs configuration.")

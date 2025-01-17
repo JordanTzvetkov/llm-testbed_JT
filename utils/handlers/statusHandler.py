@@ -23,11 +23,35 @@ class StatusHandler:
     def update(self, newStatus):
         self.__status = newStatus
         self.__saveStatus()
-        
+
+    # def updateField(self, field: str | List[str], newValue):
+    #     self.__status[field] = newValue if type(field) == str else helpers.traverseDictAndUpdateField(field, newValue, self.__status)
+    #     self.__saveStatus()
     def updateField(self, field: str | List[str], newValue):
-        self.__status[field] = newValue if type(field) == str else helpers.traverseDictAndUpdateField(field, newValue, self.__status)
+        """
+        Updates the field in the status dictionary. If newValue is None, deletes the field.
+        """
+        if newValue is None:
+            if isinstance(field, str):
+                # Log deletion for debugging
+                if field in self.__status:
+                    print(f"Deleting top-level field: {field}")
+                self.__status.pop(field, None)
+            else:
+                # Log deletion for nested fields
+                print(f"Deleting nested field: {field}")
+                helpers.traverseDictAndUpdateField(field, None, self.__status, delete=True)
+        else:
+            if isinstance(field, str):
+                self.__status[field] = newValue
+            else:
+                helpers.traverseDictAndUpdateField(field, newValue, self.__status)
+
+        # Log status after update
+        # print(f"Updated status: {self.__status}")
+
         self.__saveStatus()
-            
+
     def __saveStatus(self):
         with open(self.__filePath, "w") as file:
             json.dump(self.__status, file, indent=4)
@@ -124,11 +148,22 @@ class StatusHandler:
         return self.__status["validateGOTermDescriptions"]["acceptedGOTerms"]
 
         #### New Methods for ExtractGeneIDs ####
-    def areGeneIDsExtracted(self):
-        return helpers.hasattrdeep(self.__status, ["extractGeneIDs", "success"]) and self.__status["extractGeneIDs"][
-            "success"] == True
+
+    def areValidGeneIDsExtracted(self):
+        """
+        Check if the validateGenes step within extractGeneIDs is marked as successful.
+        """
+        # Correct key path
+        if helpers.hasattrdeep(self.__status, ["extractGeneIDs", "results", "validateGenes"]):
+            validate_genes_status = self.__status["extractGeneIDs"]["results"]["validateGenes"]
+            # Check if the validateGenes step was successful
+            return validate_genes_status.get("success", False)
+        return False
 
     def getExtractedGeneIDsData(self):
-        if not self.areGeneIDsExtracted():
+        """
+        Retrieve validated gene IDs data from extractGeneIDs.
+        """
+        if not self.areValidGeneIDsExtracted():
             raise ValueError("Gene IDs have not yet been extracted for this paper")
-        return self.__status["extractGeneIDs"]["response"]
+        return self.__status["extractGeneIDs"]["results"]["validateGenes"]["validated_genes"]

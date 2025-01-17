@@ -12,7 +12,7 @@
         "sections": "./caches/articles/json"
     },
     "getTextFromJSON": {
-        "sections": ["abstract", "title", "intro", "results", "discussion", "methods", "FIG", "TABLE", "SUPPL"]
+        "sections": ["abstract", "title", "results", "discussion", "methods", "FIG", "TABLE", "SUPPL"]
     },
     "getPaperSpecies": {
         "systemPrompt": "The user will input a series of extracts from a PubMed publication. Identify the species that are the primary focus of the study, especially those referenced frequently in the title, abstract, or experimental design. Prioritize these species over others mentioned. Respond with only the species that the publication concerns. Provide the species names in Latin, not using the common name, and follow the format FullFirstName FullLastName (e.g. 'Homo sapiens', not 'H. Sapiens' or 'Human'). If the experiment is based on a certain cell type or tissue type, please provide the species the cells are derived from, e.g. 'Homo sapiens', not 'HEK cells'. Respond in JSON, using the following schema: {\"species\": [\"1st species name\", \"2nd species name\", \"3rd species name, etc\"]} This must be parsable, so do NOT include \\n or anything similar which will make the validation fail for the JSON schema. You must respond with NO text other than the JSON.",
@@ -32,89 +32,188 @@
         }
     },
     "extractGeneIDs": {
-        "systemPrompt": "You are a systematic gene extraction assistant for scientific publications.Your primary goals are to:Comprehensively identify all genes and proteins mentioned in the text; Capture genes through multiple reference types specified by the user (symbols, full names, functional descriptions); Focus on genes with experimental evidence or novel biological insights; Ensure precise, unambiguous gene identification; Respond with structured, precise output in JSON using the schema provided by the user. The following are your key extraction principles: Look beyond obvious mentions; Consider implied or contextually referenced genes; Prioritise genes with experimental context; Be thorough and methodical; Avoid over-interpretation. Adhere to the following response requirements: Respond only with the genes associated with the paper; Respond in JSON, using the schema provided by the user; Your response must be parsable, so do NOT include \\n or anything similar which will make the validation fail for the JSON schema; You must respond with NO text other than the raw JSON, in compressed format (i.e. no indentation, new lines) to limit the amount of characters that must be stored.",
-        "userPrompts": [
+        "systemPrompt": "You are a systematic gene extraction assistant for scientific publications. Think step-by-step before you respond. Your primary goals are to: Comprehensively identify all genes and proteins mentioned in the text; Capture genes through multiple reference types specified by the user (symbols, full names, functional descriptions); Focus on genes with experimental evidence or novel biological insights; Ensure precise, unambiguous gene identification; Respond with structured, precise output in JSON using the schema provided by the user. The following are your key extraction principles: Look beyond obvious mentions; Consider implied or contextually referenced genes; Prioritise genes with experimental context; Be thorough and methodical; Avoid over-interpretation. Adhere to the following response requirements: Respond only with the genes associated with the paper; Respond in JSON, using the schema provided by the user; Your response must be parsable, so do NOT include \\n or anything similar which will make the validation fail for the JSON schema; You must respond with NO text other than the raw JSON, in compressed format (i.e. no indentation, new lines) to limit the amount of characters that must be stored.",
+        "userPrompts": 
+        [
           {
             "name": "getSymbols",
-            "prompt": "Specific Genes are often denoted by symbols, such as A2M, ABL1, ADCY5, AGPAT2, (etc). Systematically identify all unique gene symbols mentioned in the following text. Provide a comprehensive list of gene symbols, ensuring no duplicates. Use the following response schema: {\"genes\": [{\"symbol\": \"symbol of gene 1\"}, {\"symbol\": \"symbol of gene 2\"}, \"etc\"]}. Only provide the symbols you are certain of. If no symbols are found, respond with {\"genes\": []}"
-          },
-          {
-            "name": "getDescriptions",
-            "prompt": "Specific Genes are often referred to by a short description, such as alpha-2-macroglobulin, adenylate cyclase 5 (etc). Systematically identify and extract all genes referenced by their descriptions from the text, using the following response schema: {\"genes\": [{\"description\": \"gene 1 description\"}, {\"description\": \"gene 2 description\"}, \"etc\"]}. Only provide the descriptions you are certain of. If no gene references are found, respond with {\"genes\": []}"
-          },
-          {
-            "name": "getAdditional",
-            "prompt": "Specific Genes may be referenced by symbols, names, product descriptions, etc. Perform a final comprehensive scan for any remaining gene or protein references not previously identified. This includes references in figure captions; genes implied by functional descriptions; genes mentioned in methods or results sections; and any gene-related terminology that might have been overlooked. Cross-reference with the previously identified genes to ensure complete coverage. Give a list of all uniquely identifiable genes and proteins in this article by name or function using the following schema: {\\\"genes\\\": [{\\\"identifier\\\": \\\"previously missed gene 1 identifier\\\"}, {\\\"identifier \\\": \\\" previously missed gene 2 identifier \\\"}, \\\"etc\\\"]}. If no additional genes are found, respond with {\"genes\": []}"
-          }
-        ],
-        "responseSchema": {}, #### TODO: add response schema for each prompt or to final output as system prompt? might need a 4th "prompt"
-                                #### TODO: test run code so far to figure out what we get. 
-    "getPaperGenes": {
-        "systemPrompt": "The user will input a series of extracts from a PubMed publication. You must consider ALL genes and proteins mentioned in the paper, including genes that may have been implied. Retain only those genes/proteins for which experimental evidence or novel information about biological processes, functions, cellular location, or interactions with other proteins is provided. If no genes are retained, analyse why this might be the case. Consider if the gene information could be implicit or if there are figure annotations that might have been overlooked and try again. Finally, match these genes to the species of the paper, purely based on the publication. You are to respond only with the genes associated with the species of the paper. Respond in JSON, using the following schema: {\\\"species\\\": [{\\\"name\\\": \\\"1st species name\\\", \\\"genes\\\": [{\\\"identifier\\\": \\\"identifier of gene 1 for 1st species (name of database identifier was taken from in brackets if known, otherwise just blank brackets)\\\", \\\"name\\\": \\\"name of gene 1 for 1st species\\\", \\\"symbol\\\": \\\"symbol of gene 1 for 1st species\\\"}, {\\\"identifier\\\": \\\"identifier of gene 2 for 1st species\\\", \\\"name\\\": \\\"name of gene 2 for 1st species\\\", \\\"symbol\\\": \\\"symbol of gene 2 for 1st species\\\"}, \\\"etc\\\"]}]}, etc. This must be parsable, so do NOT include \\\\n or anything similar which will make the validation fail for the JSON schema. You must respond with NO text other than the raw JSON, in compressed format (i.e. no indentation, new lines) to limit the amount of characters that must be stored. Each species object should contain ALL the genes associated with it in the paper. If some of the genes/proteins have not been assigned to a species directly, please also include them in your answer under a species name set to ‘unknown species’. For the identifier, provide e.g. UniProt, Ensembl, RefSeq, VEuPathDB or other reference IDs if given. If not, mark as 'no database identifier'. For gene name please provide the full name of the gene or leave as 'not specified' if it has not been provided, for example 'NADP/NAD-dependent aldehyde dehydrogenase PuuC' is the name for the gene 'puuC', and 'puuC' would be annotated as the gene symbol. Here are the species: ",
-        "responseSchema": {
-            "type": "object",
-            "properties": {
-                "species": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "genes": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "identifier": {
-                                            "type": "string"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "symbol": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": ["identifier", "name", "symbol"],
-                                    "additionalProperties": false
-                                }
-                            }
-                        },
-                        "required": ["name", "genes"],
-                        "additionalProperties": false
-                    }
-                }
-            },
-            "required": ["species"],
-            "additionalProperties": false
-        }
-    },
-    "getPaperGOTerms": {
-        "systemPromptStart": "The user is going to give you a pair of gene and species. Find all Gene Ontology terms associated with this pair in the given publication. Assess whether these Gene Ontology (GO) terms are supported by novel experimental evidence within this study. Assess whether the evidence is strong or weak, to enable us to prioritise terms backed by robust data. Give all resulting Gene Ontology terms associated with this pair in the given publication as a JSON list i.e. [{\\\"id\\\": \\\"GO:4526854138\\\", \\\"description\\\": \\\"description for first GO term\\“, \\“evidence\\\": \\“describe the experimental evidence supporting this GO term assignment“, \\“evidence score\\\": \\“provide a score for the evidence as no evidence, weak evidence, or strong evidence\"}, {\\\"id\\\": \\\"GO:3284974\\\", \\\"description\\\": \\\"description for second go term\\“, \\“evidence\\\": \\“describe the experimental evidence supporting this GO term assignment“, \\“evidence score\\\": \\“provide a score for the evidence as no evidence, weak evidence, or strong evidence\"}]. Double-check that the GO terms description aligns with the actual study context and try to provide GO terms as specific as possible. Double-check the GO term IDs match the description – if you have provided an incorrect GO term ID, please correct it before returning the JSON list. Your final answer must follow the specified JSON schema to pass validation as it will be processed. You must give NO other commentary than the JSON array.\\nHere is the publication:\\n\\n",
-        "responseSchema": {
-            "type": "array",
-            "items": {
+            "prompt": "Specific Genes are often denoted by symbols, such as <example> A2M, ABL1, ADCY5, AGPAT2, (etc). </example>Think step-by-step and systematically identify all unique gene symbols mentioned in the following text. Provide a comprehensive list of gene symbols, ensuring no duplicates. Use the following response schema: {\"genes\": [{\"symbol\": \"symbol of gene 1\"}, {\"symbol\": \"symbol of gene 2\"}, \"etc\"]}. Only provide the symbols you are certain of. If no symbols are found, respond with {\"genes\": []}",
+            "responseSchema": {
                 "type": "object",
+                "required": ["genes"],
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "pattern": "^GO:\\d{7}$"
-                    },
-                    "description": {
-                        "type": "string"
+                    "genes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["symbol"],
+                            "properties": {
+                                "symbol": {"type": "string"}
+                            }
+                        }
                     }
                 },
-                "required": ["id", "description"],
+                "additionalProperties": false
+            }
+          },
+
+          {
+            "name": "getDescriptions",
+            "prompt": "Specific Genes are often referred to by a short description, such as <example> alpha-2-macroglobulin, adenylate cyclase 5 (etc). </example> Think step-by-step and systematically identify and extract all genes referenced by their descriptions from the text, using the following response schema: {\"genes\": [{\"description\": \"gene 1 description\"}, {\"description\": \"gene 2 description\"}, \"etc\"]}. Only provide the descriptions you are certain of. If no gene references are found, respond with {\"genes\": []}",
+            "responseSchema": {
+                    "type": "object",
+                    "required": ["genes"],
+                    "properties": {
+                        "genes": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": ["description"],
+                                "properties": {
+                                    "description": {"type": "string"}
+                                }
+                            }
+                        }
+                    },
+                    "additionalProperties": false
+                }
+          },
+
+          {
+            "name": "getAdditional",
+            "prompt": "Specific Genes may be referenced by symbols, names, product descriptions, etc. Think step-by-step and perform a final comprehensive scan for any remaining gene or protein references not previously identified. This includes references in figure captions; genes implied by functional descriptions; genes mentioned in methods or results sections; and any gene-related terminology that might have been overlooked. Cross-reference with the previously identified genes to ensure complete coverage. Give a list of all uniquely identifiable genes and proteins in this article by name or function using the following schema: {\\\"genes\\\": [{\\\"identifier\\\": \\\"previously missed gene 1 identifier\\\"}, {\\\"identifier \\\": \\\" previously missed gene 2 identifier \\\"}, \\\"etc\\\"]}. If no additional genes are found, respond with {\"genes\": []}",
+            "responseSchema": {
+                "type": "object",
+                "required": ["genes"],
+                "properties": {
+                    "genes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["identifier"],
+                            "properties": {
+                                "identifier": {"type": "string"}
+                            }
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+          },
+
+          {
+            "name": "validateGenes",
+            "prompt": "Review all identifiers extracted from the previous steps (symbols, descriptions, and additional references). Think step-by-step and For each gene/protein, verify: 1) There is concrete experimental or functional evidence in the text supporting its inclusion; 2) It is actually a gene/protein rather than another biological entity (e.g. a species of a chemical compound); 3) The reference is unambiguous and specific; 4) There are no duplicates across different naming conventions. 5) assign an 'importance_for_paper' score for each gene or protein, using one of the following categories: 'main focus', 'important', 'mentioned in relation to other genes/proteins', or 'other'. Respond with a validated list using the schema: {\"validated_genes\": [{\"symbol\": \"gene symbol if available\", \"name\": \"full name if available\", \"other_identifier\": \"any other unique identifier of this gene that you found\", \"evidence\": \"brief quote or reference from text supporting inclusion\", \"confidence\": \"high/medium/low\", \"importance_for_paper\": \"the importance score yuo have given this gene\"}]}. Remove any genes that don't meet these criteria. If unsure about any gene, include it with a 'low' confidence rating.",
+            "responseSchema": {
+                "type": "object",
+                "required": ["validated_genes"],
+                "properties": {
+                    "validated_genes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["evidence", "confidence", "importance_for_paper"],
+                            "properties": {
+                                "symbol": {
+                                    "type": ["string", "null"]
+                                },
+                                "name": {
+                                    "type": ["string", "null"]
+                                },
+                                "otherIDs": {
+                                    "type": ["array", "null"],
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "evidence": {
+                                    "type": "string"
+                                },
+                                "confidence": {
+                                    "type": "string",
+                                    "enum": ["high", "medium", "low"]
+                                },
+                                "importance_for_paper": {
+                                    "type": "string",
+                                    "enum": [
+                                        "main focus",
+                                        "important",
+                                        "mentioned in relation to other genes/proteins",
+                                        "other"
+                                    ]
+                                }
+                            },
+                            "anyOf": [
+                                {"required": ["symbol"]},
+                                {"required": ["name"]},
+                                {"required": ["otherIDs"]}
+                            ]
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+          }
+        ]
+    }, 
+    "matchGeneSpeciesPairs": {
+    "systemPrompt": "You are a curator of scientific publications. Your role is to assign genes to the species they are derived from based on evidence provided in the text. A single gene may be associated with multiple species. Ensure assignments are accurate, unambiguous, and grounded in experimental context. If a gene cannot be confidently assigned to any species, include 'unassigned' in its species list. Respond with structured, precise output in JSON using the schema provided by the user. Your response must be parsable, so do NOT include \\n or anything similar which will make the validation fail for the JSON schema; You must respond with NO text other than the raw JSON, in compressed format (i.e. no indentation, new lines) to limit the amount of characters that must be stored.",
+    "userPrompts": [
+        {
+            "name": "initialAssignment",
+            "prompt": "Using the provided text, assign each gene to the species it was derived from. Think step by step. A gene can be associated with multiple species. First, list all species you think a gene is linked to. Then, make sure you have based your assignments on explicit mentions or strong contextual evidence. Double-check all evidence. If no clear species can be identified for a gene, include 'unassigned' in its species list. Respond using the schema: {\"gene_species_pairs\": [{\"gene\": \"gene identifier\", \"species\": [\"species name 1\", \"species name 2\", \"unassigned\", ...]}]}",
+            "responseSchema": {
+                "type": "object",
+                "required": ["gene_species_pairs"],
+                "properties": {
+                    "gene_species_pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["gene", "species"],
+                            "properties": {
+                                "gene": {"type": "string"},
+                                "species": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        {
+            "name": "validateAssignments",
+            "prompt": "Review the gene-to-species assignments from the previous step. For each assignment, think step by step and verify: 1) The assignments are supported by explicit or strong contextual evidence; 2) The gene identifier and species names are accurate and unambiguous; 3) No species assignments are missing or incorrect; 4) If no clear species can be identified for a gene, 'unassigned' must be included in its species list. Provide a validated list of gene-to-species pairs using the schema: {\"validated_pairs\": [{\"gene\": \"gene identifier\", \"species\": [\"species name 1\", \"species name 2\", \"unassigned\", ...], \"confidence\": \"high/medium/low\", \"evidence\": \"brief quote or reference from the text supporting the assignment\"}]}",
+            "responseSchema": {
+                "type": "object",
+                "required": ["validated_pairs"],
+                "properties": {
+                    "validated_pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["gene", "species", "confidence", "evidence"],
+                            "properties": {
+                                "gene": {"type": "string"},
+                                "species": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                },
+                                "confidence": {
+                                    "type": "string",
+                                    "enum": ["high", "medium", "low"]
+                                },
+                                "evidence": {"type": "string"}
+                            }
+                        }
+                    }
+                },
                 "additionalProperties": false
             }
         }
-    },
-    "validateGOTermDescriptions": {
-        "systemPrompt": "You are being used as part of a system to compare assumed Gene Ontology term descriptions to their actual descriptions. You will be asked a simple true or false question along the lines of \"Does 'x' mean the same as 'y'\". You must respond in simple JSON format, following schema {\"result\": true} or {\"result\": false}. You must return NOTHING else than the valid JSON.",
-        "responseSchema": {
-            "type": "boolean"
-        }
-    }
+    ]
+}
 }
